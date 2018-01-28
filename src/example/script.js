@@ -1,3 +1,3 @@
-import Observable from '../main';
+import BetterTextarea from '../main';
 
-console.log(Observable);
+const textarea = new BetterTextarea();// eslint-disable-line
