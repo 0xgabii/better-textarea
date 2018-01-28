@@ -1,13 +1,15 @@
 module.exports = {
   root: true,
+  extends: 'airbnb-base',  
   parser: 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },
+  plugins: ['jest'],  
   env: {
     browser: true,
+    'jest/globals': true,
   },
-  extends: 'airbnb-base',
   'rules': {
     'import/extensions': ['error', 'always', {
       'js': 'never',
