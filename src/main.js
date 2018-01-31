@@ -11,21 +11,21 @@ const defaultOptions = {
 const requiredOptions = ['el'];
 
 class BetterTextarea {
-  constructor(param) {
-    if (!param) throwError('No options to init');
+  constructor(args) {
+    if (!args) throwError('No options to init');
 
-    const type = param.constructor;
+    const type = args.constructor;
 
     const options = {};
 
     // Check type
     if (type === String) {
-      options.el = param;
+      options.el = args;
     } else if (type === Object) {
-      if (Object.keys(param).length) {
-        Object.keys(param).forEach((key) => {
+      if (Object.keys(args).length) {
+        Object.keys(args).forEach((key) => {
           if (Object.keys(defaultOptions).includes(key)) {
-            options[key] = param[key];
+            options[key] = args[key];
           }
         });
       } else {
@@ -55,6 +55,12 @@ class BetterTextarea {
     });
 
     Object.assign(this, mergeOptions);
+
+    this.init();
+  }
+
+  init() {
+    console.log(this.el);
   }
 }
 

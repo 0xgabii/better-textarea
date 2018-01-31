@@ -1,8 +1,8 @@
 import BetterTextArea from '../src/main';
 
-describe('Check parameter', () => {
-  document.body.innerHTML = '<textarea id="textarea"></textarea>';
+document.body.innerHTML = '<textarea id="textarea"></textarea>';
 
+describe('Check parameters', () => {
   test('if nothing is given', () => {
     expect(() => new BetterTextArea()).toThrowError(/No options to init/);
   });
@@ -16,7 +16,7 @@ describe('Check parameter', () => {
   });
 
   test('if selector string is given', () => {
-    let textarea = null;
+    let textarea;
 
     expect(() => {
       textarea = new BetterTextArea('#textarea');
@@ -33,11 +33,25 @@ describe('Check parameter', () => {
   });
 
   test('if object is given', () => {
+    let textarea;
+
+    expect(() => {
+      textarea = new BetterTextArea({
+        el: '#textarea',
+      });
+    }).not.toThrow();
+    expect(textarea.el).toBe('#textarea');
+    expect(textarea.tabSize).toBe(2);
+  });
+
+  test("when finished, call 'init' method", () => {
+    const spy = jest.spyOn(BetterTextArea.prototype, 'init');
+
+    // eslint-disable-next-line
     const textarea = new BetterTextArea({
       el: '#textarea',
     });
 
-    expect(textarea.el).toBe('#textarea');
-    expect(textarea.tabSize).toBe(2);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });
