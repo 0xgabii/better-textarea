@@ -1,17 +1,20 @@
 # better-textarea
 
-# TODO
+## TODO
 
 - indent/unindent
-  - [x] indent
-  - [x] unindent
-  - [x] multi-line support
-  - [] sometimes selection works strangely
-- auto open charaters: (), {}, []
+  - ~~indent~~
+  - ~~unindent~~
+  - ~~multi-line support~~
+  - sometimes selection works weird
+- control characters: (), {}, [] ...
+  - auto open/close
+  - auto indent
 - undo/redo
-- autocomplete: when tagging peaple in github
+- autocomplete: similar when tagging people in github
+- autoheight
 
-# Build Setup
+## Build Setup
 ```
 # install dependencies
 yarn install
