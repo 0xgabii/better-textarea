@@ -2,6 +2,8 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/operator/filter';
 
+import { generateSpace, getStringStartIndex } from './utils';
+
 const throwError = (err) => {
   throw new Error(`[BetterTextarea] ${err}`);
 };
@@ -19,13 +21,6 @@ const defaultOptions = {
 };
 
 const requiredOptions = ['el'];
-
-const getStringStartIndex = (str) => {
-  if (str.match(/\S/)) {
-    return str.match(/\S/).index;
-  }
-  return str.length;
-};
 
 class BetterTextarea {
   constructor(args) {
@@ -124,8 +119,6 @@ class BetterTextarea {
 
   handleTab(e) {
     e.preventDefault();
-
-    const generateSpace = num => ' '.repeat(num);
 
     const indent = generateSpace(this.tabSize);
     const { start: startPos, end: endPos } = this.cursor;
