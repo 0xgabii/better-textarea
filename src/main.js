@@ -107,13 +107,22 @@ class BetterTextarea {
     this.textarea.value = v;
   }
 
+  get selections() {
+    const { start, end } = this.cursor;
+    return {
+      selectionPrev: this.value.substring(0, start),
+      selection: this.value.substring(start, end),
+      selectionNext: this.value.substring(end),
+    };
+  }
+
   filterKeys(e) {
     if (this.pairedKeys.find(key => key.open === e.key)) {
       this.injectPairedKey(e);
     } else if (e.key === 'Backspace') {
       this.ejectPairedKey(e);
     } else if (e.key === 'Enter') {
-      this.injectEnterBetweenPairedKey(e);
+      this.injectEnterWithIndent(e);
     }
   }
 
@@ -123,9 +132,8 @@ class BetterTextarea {
     const indent = generateSpace(this.tabSize);
     const { start: startPos, end: endPos } = this.cursor;
 
-    let selectionPrev = this.value.substring(0, startPos);
-    let selection = this.value.substring(startPos, endPos);
-    const selectionNext = this.value.substring(endPos);
+    let { selectionPrev, selection } = this.selections;
+    const { selectionNext } = this.selections;
 
     const lineStartPos = startPos - selectionPrev.split('\n').pop().length;
 
@@ -191,11 +199,10 @@ class BetterTextarea {
   injectPairedKey(e) {
     e.preventDefault();
 
-    const { start: startPos, end: endPos } = this.cursor;
-    const pairedKey = this.pairedKeys.find(key => key.open === e.key);
+    const { start: startPos } = this.cursor;
+    const { selectionPrev, selectionNext } = this.selections;
 
-    const selectionPrev = this.value.substr(0, startPos);
-    const selectionNext = this.value.substring(endPos);
+    const pairedKey = this.pairedKeys.find(key => key.open === e.key);
 
     let value = pairedKey.open + pairedKey.close;
 
@@ -212,9 +219,8 @@ class BetterTextarea {
   }
 
   ejectPairedKey(e) {
-    const { start: startPos, end: endPos } = this.cursor;
-    const selectionPrev = this.value.substring(0, startPos);
-    const selectionNext = this.value.substring(endPos);
+    const { start: startPos } = this.cursor;
+    const { selectionPrev, selectionNext } = this.selections;
 
     const betweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
       return key.open === this.value[startPos - 1] && key.close === this.value[startPos];
@@ -227,8 +233,29 @@ class BetterTextarea {
     }
   }
 
-  injectEnterBetweenPairedKey() {
-    console.log(this.textarea);
+  injectEnterWithIndent(e) {
+    e.preventDefault();
+
+    const { start: startPos, end: endPos } = this.cursor;
+    const { selectionPrev, selectionNext } = this.selections;
+
+    const lineStartPos = startPos - selectionPrev.split('\n').pop().length;
+    const strStartIndex = getStringStartIndex(this.value.substring(lineStartPos, endPos));
+
+    const betweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
+      return key.open === this.value[startPos - 1] && key.close === this.value[startPos];
+    });
+
+    let value = `\n${generateSpace(strStartIndex)}`;
+    let cursor = strStartIndex;
+
+    if (betweenPairedKey) {
+      value = `\n${generateSpace(strStartIndex + this.tabSize)}\n${generateSpace(strStartIndex)}`;
+      cursor = strStartIndex + this.tabSize;
+    }
+
+    this.value = selectionPrev + value + selectionNext;
+    this.cursor = startPos + cursor + 1;
   }
 }
 
