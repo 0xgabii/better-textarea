@@ -20,6 +20,13 @@ const defaultOptions = {
 
 const requiredOptions = ['el'];
 
+const getStringStartIndex = (str) => {
+  if (str.match(/\S/)) {
+    return str.match(/\S/).index;
+  }
+  return str.length;
+};
+
 class BetterTextarea {
   constructor(args) {
     if (!args) throwError('No options to init');
@@ -119,7 +126,6 @@ class BetterTextarea {
     e.preventDefault();
 
     const generateSpace = num => ' '.repeat(num);
-    const checkSpace = (base, start, space) => base.substr(start, space) === generateSpace(space);
 
     const indent = generateSpace(this.tabSize);
     const { start: startPos, end: endPos } = this.cursor;
@@ -141,19 +147,19 @@ class BetterTextarea {
         selectionPrev = selectionPrev.substring(0, lineStartPos);
         selection = this.value.substring(lineStartPos, endPos);
 
-        selection = selection.split('\n').map((line, index) => {
-          for (let num = indent.length; num > 0; num -= 1) {
-            if (checkSpace(line, 0, num)) {
-              if (index === 0) {
-                startIndentLength = -num;
-              } else if (index === selection.split('\n').length - 1) {
-                endIndentLength = -num;
-              }
-              line = line.replace(generateSpace(num), '');
-              break;
-            }
+        selection = selection.split('\n').map((str, index) => {
+          const strStartIndex = getStringStartIndex(str);
+          const num = strStartIndex > this.tabSize ? this.tabSize : strStartIndex;
+
+          if (index === 0) {
+            startIndentLength = -num;
+          } else if (index === selection.split('\n').length - 1) {
+            endIndentLength = -num;
           }
-          return line;
+
+          str = str.replace(generateSpace(num), '');
+
+          return str;
         }).join('\n');
       } else {
         selectionPrev = selectionPrev.substring(0, lineStartPos) +
@@ -171,17 +177,15 @@ class BetterTextarea {
       let pos = startPos;
 
       if (e.shiftKey) {
-        let value = selectionPrev.substring(lineStartPos, startPos);
+        let str = selectionPrev.substring(lineStartPos, startPos);
 
-        for (let num = indent.length; num > 0; num -= 1) {
-          if (checkSpace(this.value, lineStartPos, num)) {
-            value = value.replace(generateSpace(num), '');
-            pos = startPos - num;
-            break;
-          }
-        }
+        const strStartIndex = getStringStartIndex(str);
+        const num = strStartIndex > this.tabSize ? this.tabSize : strStartIndex;
 
-        this.value = selectionPrev.substring(0, lineStartPos) + value + selectionNext;
+        str = str.replace(generateSpace(num), '');
+        pos = startPos - num;
+
+        this.value = selectionPrev.substring(0, lineStartPos) + str + selectionNext;
       } else {
         pos += indent.length;
         this.value = selectionPrev + indent + selectionNext;
