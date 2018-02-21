@@ -17,6 +17,7 @@ const defaultOptions = {
     { open: '[', close: ']' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
+    { open: '`', close: '`' },
   ],
 };
 
