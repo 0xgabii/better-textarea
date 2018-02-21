@@ -12,9 +12,9 @@ const defaultOptions = {
   el: undefined,
   tabSize: 2,
   pairedKeys: [
-    { open: '(', close: ')', overWritable: true },
-    { open: '{', close: '}', overWritable: true },
-    { open: '[', close: ']', overWritable: true },
+    { open: '(', close: ')' },
+    { open: '{', close: '}' },
+    { open: '[', close: ']' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
   ],
@@ -117,8 +117,10 @@ class BetterTextarea {
   }
 
   filterKeys(e) {
-    if (this.pairedKeys.find(key => key.open === e.key)) {
-      this.injectPairedKey(e);
+    const pairedKey = this.pairedKeys.find(key => key.open === e.key || key.close === e.key);
+
+    if (pairedKey) {
+      this.injectPairedKey(e, pairedKey);
     } else if (e.key === 'Backspace') {
       this.ejectPairedKey(e);
     } else if (e.key === 'Enter') {
@@ -196,22 +198,30 @@ class BetterTextarea {
     }
   }
 
-  injectPairedKey(e) {
+  injectPairedKey(e, pairedKey) {
     e.preventDefault();
 
     const { start: startPos } = this.cursor;
     const { selectionPrev, selectionNext } = this.selections;
 
-    const pairedKey = this.pairedKeys.find(key => key.open === e.key);
+    let value;
 
-    let value = pairedKey.open + pairedKey.close;
+    if (e.key === pairedKey.open) {
+      value = pairedKey.open + pairedKey.close;
 
-    if (!pairedKey.overWritable && this.value[startPos - 1] === pairedKey.open) {
-      if (this.value[startPos] === pairedKey.open) {
-        this.cursor = startPos + 1;
-        return;
+      if (e.key === pairedKey.close) {
+        if (this.value[startPos] === pairedKey.close) {
+          value = '';
+        } else if (this.value[startPos - 1] === pairedKey.close) {
+          value = e.key;
+        }
       }
+    } else {
       value = e.key;
+
+      if (this.value[startPos] === pairedKey.close) {
+        value = '';
+      }
     }
 
     this.value = selectionPrev + value + selectionNext;
