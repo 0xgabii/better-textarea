@@ -241,11 +241,11 @@ class BetterTextarea {
     const { start: startPos } = this.cursor;
     const { selectionPrev, selectionNext } = this.selections;
 
-    const betweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
+    const isCursorBetweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
       return key.open === this.value[startPos - 1] && key.close === this.value[startPos];
     });
 
-    if (betweenPairedKey) {
+    if (isCursorBetweenPairedKey) {
       e.preventDefault();
       this.value = selectionPrev.substring(0, startPos - 1) + selectionNext.substring(1);
       this.cursor = startPos - 1;
@@ -261,14 +261,18 @@ class BetterTextarea {
     const lineStartPos = startPos - selectionPrev.split('\n').pop().length;
     const strStartIndex = getStringStartIndex(this.value.substring(lineStartPos, endPos));
 
-    const betweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
-      return key.open === this.value[startPos - 1] && key.close === this.value[startPos];
+    const isCursorBetweenPairedKey = this.pairedKeys.find((key) => {// eslint-disable-line
+      return key.open === this.value[startPos - 1] && key.close === this.value[endPos];
     });
+    const isNotSamePairedKey =
+      isCursorBetweenPairedKey
+        ? isCursorBetweenPairedKey.open !== isCursorBetweenPairedKey.close
+        : false;
 
     let value = `\n${generateSpace(strStartIndex)}`;
     let cursor = strStartIndex;
 
-    if (betweenPairedKey) {
+    if (isNotSamePairedKey) {
       value = `\n${generateSpace(strStartIndex + this.tabSize)}\n${generateSpace(strStartIndex)}`;
       cursor = strStartIndex + this.tabSize;
     }
