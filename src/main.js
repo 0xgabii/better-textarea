@@ -202,31 +202,39 @@ class BetterTextarea {
   injectPairedKey(e, pairedKey) {
     e.preventDefault();
 
-    const { start: startPos } = this.cursor;
-    const { selectionPrev, selectionNext } = this.selections;
+    const { start: startPos, end: endPos } = this.cursor;
+    const { selectionPrev, selection, selectionNext } = this.selections;
 
-    let value;
+    let value = '';
+    let cursor;
 
     if (e.key === pairedKey.open) {
-      value = pairedKey.open + pairedKey.close;
+      value = pairedKey.open + selection + pairedKey.close;
+      cursor = selection
+        ? { start: startPos + 1, end: endPos + 1 }
+        : startPos + 1;
 
-      if (e.key === pairedKey.close) {
+      if (!selection && e.key === pairedKey.close) {
         if (this.value[startPos] === pairedKey.close) {
           value = '';
+          cursor = startPos + 1;
         } else if (this.value[startPos - 1] === pairedKey.close) {
           value = e.key;
+          cursor = startPos + 1;
         }
       }
     } else {
       value = e.key;
+      cursor = startPos + 1;
 
       if (this.value[startPos] === pairedKey.close) {
         value = '';
+        cursor = startPos + 1;
       }
     }
 
     this.value = selectionPrev + value + selectionNext;
-    this.cursor = startPos + 1;
+    this.cursor = cursor;
   }
 
   ejectPairedKey(e) {
