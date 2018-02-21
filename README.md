@@ -1,5 +1,9 @@
 # better-textarea
 
+> Let's dream of a better textarea
+
+Connect text editor features with 'textarea' tag
+
 ## TODO
 
 - indent/unindent
