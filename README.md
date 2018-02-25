@@ -6,14 +6,6 @@ Connect text editor features with 'textarea' tag
 
 ## TODO
 
-- indent/unindent
-  - ~~indent~~
-  - ~~unindent~~
-  - ~~multi-line support~~
-  - sometimes selection works weird
-- control characters: (), {}, [] ...
-  - auto open/close
-  - auto indent
 - undo/redo
 - autocomplete: similar when tagging people in github
 - autoheight
