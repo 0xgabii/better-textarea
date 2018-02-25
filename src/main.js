@@ -115,6 +115,8 @@ class BetterTextarea {
   }
 
   filterKeys(e) {
+    const isMac = navigator.userAgent.includes('Mac');
+
     const getPressedKeys = () => {
       const keys = {
         shift: e.shiftKey,
@@ -131,6 +133,8 @@ class BetterTextarea {
       'shift+Tab': _ => this.ejectIndent(_),
       Backspace: _ => this.ejectPairedKey(_),
       Enter: _ => this.injectEnterWithIndent(_),
+      [isMac ? 'meta+z' : 'ctrl+z']: _ => console.log(_, 'undo'),
+      [isMac ? 'shift+meta+z' : 'ctrl+y']: _ => console.log(_, 'redo'),
     };
 
     if (keyMap[getPressedKeys()]) {
