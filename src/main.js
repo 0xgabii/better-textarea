@@ -1,6 +1,5 @@
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromEvent';
-import 'rxjs/add/operator/filter';
 
 import { generateSpace, getStringStartIndex } from './utils';
 
@@ -75,10 +74,8 @@ class BetterTextarea {
   init() {
     const textarea = document.querySelector(this.el);
     const keyDown$ = Observable.fromEvent(textarea, 'keydown');
-    const tab$ = keyDown$.filter(e => e.key === 'Tab');
 
     keyDown$.subscribe(e => this.filterKeys(e));
-    tab$.subscribe(e => this.handleTab(e));
 
     this.textarea = textarea;
   }
@@ -118,21 +115,66 @@ class BetterTextarea {
   }
 
   filterKeys(e) {
-    const pairedKey = this.pairedKeys.find(key => key.open === e.key || key.close === e.key);
+    const getPressedKeys = () => {
+      const keys = {
+        shift: e.shiftKey,
+        meta: e.metaKey,
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+        [e.key]: e.key,
+      };
+      return Object.keys(keys).filter(key => keys[key]).join('+');
+    };
 
-    if (pairedKey) {
-      this.injectPairedKey(e, pairedKey);
-    } else if (e.key === 'Backspace') {
-      this.ejectPairedKey(e);
-    } else if (e.key === 'Enter') {
-      this.injectEnterWithIndent(e);
+    const keyMap = {
+      Tab: _ => this.injectIndent(_),
+      'shift+Tab': _ => this.ejectIndent(_),
+      Backspace: _ => this.ejectPairedKey(_),
+      Enter: _ => this.injectEnterWithIndent(_),
+    };
+
+    if (keyMap[getPressedKeys()]) {
+      keyMap[getPressedKeys()](e);
+    } else {
+      const pairedKey = this.pairedKeys.find(key => key.open === e.key || key.close === e.key);
+
+      if (pairedKey) {
+        this.injectPairedKey(e, pairedKey);
+      }
     }
   }
 
-  handleTab(e) {
+  injectIndent(e) {
     e.preventDefault();
 
     const indent = generateSpace(this.tabSize);
+    const { start: startPos } = this.cursor;
+
+    let { selectionPrev, selection } = this.selections;
+    const { selectionNext } = this.selections;
+
+    const lineStartPos = startPos - selectionPrev.split('\n').pop().length;
+
+    if (selection) {
+      selectionPrev = selectionPrev.substring(0, lineStartPos) +
+                      indent +
+                      selectionPrev.substring(lineStartPos, startPos);
+      selection = selection.split('\n').join(`\n${indent}`);
+
+      this.value = selectionPrev + selection + selectionNext;
+      this.cursor = {
+        start: startPos + indent.length,
+        end: startPos + selection.length + indent.length,
+      };
+    } else {
+      this.value = selectionPrev + indent + selectionNext;
+      this.cursor = startPos + indent.length;
+    }
+  }
+
+  ejectIndent(e) {
+    e.preventDefault();
+
     const { start: startPos, end: endPos } = this.cursor;
 
     let { selectionPrev, selection } = this.selections;
@@ -141,61 +183,47 @@ class BetterTextarea {
     const lineStartPos = startPos - selectionPrev.split('\n').pop().length;
 
     if (selection) {
-      let startIndentLength = indent.length;
-      let endIndentLength = indent.length;
+      let subtractStartPos = 0;
+      let subtractEndPost = 0;
 
-      if (e.shiftKey) {
-        startIndentLength = 0;
-        endIndentLength = 0;
+      selectionPrev = selectionPrev.substring(0, lineStartPos);
+      selection = this.value.substring(lineStartPos, endPos);
 
-        selectionPrev = selectionPrev.substring(0, lineStartPos);
-        selection = this.value.substring(lineStartPos, endPos);
+      selection = selection.split('\n').map((str, index) => {
+        const strStartIndex = getStringStartIndex(str);
+        const num =
+          strStartIndex > this.tabSize
+            ? this.tabSize
+            : strStartIndex;
 
-        selection = selection.split('\n').map((str, index) => {
-          const strStartIndex = getStringStartIndex(str);
-          const num = strStartIndex > this.tabSize ? this.tabSize : strStartIndex;
+        if (index === 0) subtractStartPos -= num;
+        subtractEndPost -= num;
 
-          if (index === 0) {
-            startIndentLength = -num;
-          } else if (index === selection.split('\n').length - 1) {
-            endIndentLength = -num;
-          }
+        str = str.replace(generateSpace(num), '');
 
-          str = str.replace(generateSpace(num), '');
-
-          return str;
-        }).join('\n');
-      } else {
-        selectionPrev = selectionPrev.substring(0, lineStartPos) +
-                        indent +
-                        selectionPrev.substring(lineStartPos, startPos);
-        selection = selection.split('\n').join(`\n${indent}`);
-      }
+        return str;
+      }).join('\n');
 
       this.value = selectionPrev + selection + selectionNext;
       this.cursor = {
-        start: startPos + startIndentLength,
-        end: startPos + selection.length + endIndentLength,
+        start: lineStartPos > startPos + subtractStartPos
+          ? lineStartPos
+          : startPos + subtractStartPos,
+        end: endPos + subtractEndPost,
       };
     } else {
-      let pos = startPos;
+      let str = selectionPrev.substring(lineStartPos, startPos);
 
-      if (e.shiftKey) {
-        let str = selectionPrev.substring(lineStartPos, startPos);
+      const strStartIndex = getStringStartIndex(str);
+      const num =
+        strStartIndex > this.tabSize
+          ? this.tabSize
+          : strStartIndex;
 
-        const strStartIndex = getStringStartIndex(str);
-        const num = strStartIndex > this.tabSize ? this.tabSize : strStartIndex;
+      str = str.replace(generateSpace(num), '');
 
-        str = str.replace(generateSpace(num), '');
-        pos = startPos - num;
-
-        this.value = selectionPrev.substring(0, lineStartPos) + str + selectionNext;
-      } else {
-        pos += indent.length;
-        this.value = selectionPrev + indent + selectionNext;
-      }
-
-      this.cursor = pos;
+      this.value = selectionPrev.substring(0, lineStartPos) + str + selectionNext;
+      this.cursor = startPos - num;
     }
   }
 
@@ -214,6 +242,7 @@ class BetterTextarea {
         ? { start: startPos + 1, end: endPos + 1 }
         : startPos + 1;
 
+      // pairedKey like ', ", `
       if (!selection && e.key === pairedKey.close) {
         if (this.value[startPos] === pairedKey.close) {
           value = '';
